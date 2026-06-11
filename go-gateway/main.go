@@ -56,7 +56,6 @@ func getOrCreateBuffer(machineID string) *MachineBuffer {
 
 	buffersMu.Lock()
 	defer buffersMu.Unlock()
-	// Double check
 	if buf, exists = buffers[machineID]; exists {
 		return buf
 	}
@@ -73,17 +72,14 @@ func main() {
 	brokerPort := getEnv("MQTT_BROKER_PORT", "1883")
 	brokerURI := fmt.Sprintf("tcp://%s:%s", brokerHost, brokerPort)
 
-	// Set up MQTT client options
 	opts := mqtt.NewClientOptions().AddBroker(brokerURI)
 	opts.SetClientID("go_edge_gateway")
 	opts.SetCleanSession(true)
 	opts.SetAutoReconnect(true)
 	opts.SetConnectRetry(true)
 
-	// Handle connection lost/reconnect
 	opts.SetOnConnectHandler(func(client mqtt.Client) {
 		log.Println("Connected to MQTT broker.")
-		// Subscribe to topic
 		topic := "factory/machines/vibration"
 		token := client.Subscribe(topic, 0, handleMessage)
 		if token.Wait() && token.Error() != nil {
@@ -97,7 +93,6 @@ func main() {
 		log.Printf("Error connecting to MQTT: %v. Will retry in background...", token.Error())
 	}
 
-	// Ticker to compute RMS every second
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
 		for range ticker.C {
@@ -105,7 +100,6 @@ func main() {
 		}
 	}()
 
-	// Expose Prometheus metrics
 	http.Handle("/metrics", promhttp.Handler())
 	port := getEnv("PORT", "8080")
 	log.Printf("Starting HTTP server on port %s...", port)
@@ -146,18 +140,15 @@ func calculateAndPublishRMS() {
 		count := len(buf.vibrations)
 		if count == 0 {
 			buf.mu.Unlock()
-			// If no values received, we can set metrics to 0
 			vibrationGauge.WithLabelValues(id).Set(0)
 			continue
 		}
 		
-		// Copy and reset the buffer (reuse slice capacity)
 		localVibrations := make([]float64, count)
 		copy(localVibrations, buf.vibrations)
 		buf.vibrations = buf.vibrations[:0]
 		buf.mu.Unlock()
 
-		// Calculate RMS: sqrt( sum(v^2) / n )
 		var sumSquares float64
 		for _, v := range localVibrations {
 			sumSquares += v * v

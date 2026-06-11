@@ -38,14 +38,12 @@ export default function App() {
 
   const refreshIntervalRef = useRef<any>(null);
 
-  // Fetch active machines and current values from Prometheus
   const fetchData = async () => {
     try {
       setStatus("loading");
       const now = Math.floor(Date.now() / 1000);
-      const start = now - 300; // 5 minutes ago
+      const start = now - 300;
 
-      // 1. Fetch current values and find active machines
       const instantRes = await fetch(
         `${prometheusUrl}/api/v1/query?query=machine_vibration_rms_g`
       );
@@ -69,7 +67,6 @@ export default function App() {
         });
 
         if (activeMachines.length > 0) {
-          // Keep unique machine list
           setMachines(Array.from(new Set(activeMachines)));
           if (!activeMachines.includes(selectedMachine)) {
             setSelectedMachine(activeMachines[0]);
@@ -78,7 +75,6 @@ export default function App() {
         setCurrentValue(selectedMachineVal);
       }
 
-      // 2. Fetch last 5 minutes of data for the selected machine
       const rangeRes = await fetch(
         `${prometheusUrl}/api/v1/query_range?query=machine_vibration_rms_g{machine_id="${selectedMachine}"}&start=${start}&end=${now}&step=5s`
       );
@@ -102,7 +98,6 @@ export default function App() {
         setChartData([]);
       }
 
-      // 3. Fetch active alerts from Prometheus
       try {
         const alertsRes = await fetch(`${prometheusUrl}/api/v1/alerts`);
         if (alertsRes.ok) {
@@ -111,7 +106,6 @@ export default function App() {
             const alerts = alertsJson.data.alerts.filter((a: any) => a.state === "firing");
             setActiveAlerts(alerts);
             
-            // Check if any firing alert is related to our current machine
             const machineAlert = alerts.some((a: any) => a.labels.machine_id === selectedMachine);
             setIsAlerting(machineAlert);
           }
@@ -133,7 +127,6 @@ export default function App() {
 
   useEffect(() => {
     fetchData();
-    // Refresh every 5 seconds
     refreshIntervalRef.current = setInterval(fetchData, 5000);
     return () => {
       if (refreshIntervalRef.current) clearInterval(refreshIntervalRef.current);
@@ -153,10 +146,8 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/40 via-slate-950 to-slate-950 text-slate-100 p-6 md:p-10">
       
-      {/* Container */}
       <div className="max-w-7xl mx-auto space-y-8">
         
-        {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/5 pb-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -173,7 +164,6 @@ export default function App() {
             </p>
           </div>
           
-          {/* Connection Status & Config */}
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
             <div className="flex items-center gap-2 bg-slate-900/60 border border-white/5 px-3 py-1.5 rounded-lg text-xs">
               <span className="text-slate-400">Prometheus URL:</span>
@@ -220,7 +210,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* Connection Failure Alert */}
         {status === "disconnected" && (
           <div className="border border-red-500/30 bg-red-950/20 text-red-400 p-4 rounded-xl flex items-start gap-3 glass shadow-lg">
             <AlertTriangle className="h-5 w-5 mt-0.5 flex-shrink-0 text-red-500" />
@@ -237,10 +226,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Metrics Overview Cards */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          {/* Card 1: Machine Selector */}
           <div className="glass p-6 rounded-2xl shadow-xl flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-indigo-400">
@@ -273,7 +260,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Card 2: Current Vibration (RMS) */}
           <div className={`glass p-6 rounded-2xl shadow-xl flex flex-col justify-between border ${getAlertColorClass()} transition-all duration-300`}>
             <div className="flex justify-between items-start">
               <div className="space-y-2">
@@ -284,7 +270,6 @@ export default function App() {
                 <h3 className="text-2xl font-bold">Vibration (RMS)</h3>
               </div>
               
-              {/* Alert status badge */}
               <div className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
                 isAlerting 
                   ? "bg-red-500/20 border-red-500 text-red-300 animate-pulse" 
@@ -312,7 +297,6 @@ export default function App() {
             </p>
           </div>
 
-          {/* Card 3: Alert Rules & Specs */}
           <div className="glass p-6 rounded-2xl shadow-xl flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-indigo-400">
@@ -348,7 +332,6 @@ export default function App() {
 
         </section>
 
-        {/* Real-time Telemetry Graph */}
         <section className="glass p-6 md:p-8 rounded-3xl shadow-2xl space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-white/5 pb-4">
             <div className="space-y-1">
@@ -432,7 +415,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* Firing Alerts Status */}
         {activeAlerts.length > 0 && (
           <section className="glass p-6 rounded-2xl shadow-xl border border-red-500/20">
             <h3 className="text-lg font-bold text-red-400 flex items-center gap-2 mb-4">
@@ -459,7 +441,6 @@ export default function App() {
           </section>
         )}
 
-        {/* System Overview Details */}
         <footer className="text-center text-xs text-slate-500 space-y-2">
           <p>
             EdgePulse-Mini Dashboard built with React, Vite, TailwindCSS v4, Recharts, and Lucide React.

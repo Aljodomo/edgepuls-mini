@@ -5,7 +5,6 @@ WORKDIR /app
 COPY go.mod ./
 COPY main.go ./
 
-# Run tidy to resolve dependencies and generate go.sum inside the container
 RUN go mod tidy
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o gateway .
