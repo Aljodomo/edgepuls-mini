@@ -1,0 +1,32 @@
+mosquitto:
+  image: eclipse-mosquitto:2.0.15
+  port: 1883
+
+simulator:
+  image: edgepulse/machine-simulator:latest
+  imagePullPolicy: Never
+  machines:
+    - id: cnc_01
+      freq: 10.0
+      amplitude: 1.5
+      noise: 0.2
+    - id: cnc_02
+      freq: 12.5
+      amplitude: 2.2
+      noise: 0.25
+
+gateway:
+  image: edgepulse/go-gateway:latest
+  imagePullPolicy: Never
+  replicas: 1
+  port: 8080
+
+prometheus:
+  image: prom/prometheus:v2.52.0
+  port: 9090
+
+dashboard:
+  image: edgepulse/dashboard:latest
+  imagePullPolicy: Never
+  replicas: 1
+  port: 80

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-dashboard
+  labels:
+    app: dashboard
+spec:
+  replicas: {{ .Values.dashboard.replicas }}
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: {{ .Values.dashboard.image }}
+        imagePullPolicy: {{ .Values.dashboard.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.dashboard.port }}
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: edgepulse-mini-dashboard
+  labels:
+    app: dashboard
+spec:
+  ports:
+  - port: 80
+    targetPort: http
+    name: http
+  selector:
+    app: dashboard

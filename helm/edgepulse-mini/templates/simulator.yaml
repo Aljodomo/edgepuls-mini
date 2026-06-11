@@ -1,0 +1,39 @@
+{{- range .Values.simulator.machines }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Release.Name }}-simulator-{{ .id | replace "_" "-" }}
+  labels:
+    app: simulator
+    machine-id: {{ .id }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simulator
+      machine-id: {{ .id }}
+  template:
+    metadata:
+      labels:
+        app: simulator
+        machine-id: {{ .id }}
+    spec:
+      containers:
+      - name: simulator
+        image: {{ $.Values.simulator.image }}
+        imagePullPolicy: {{ $.Values.simulator.imagePullPolicy }}
+        env:
+        - name: MACHINE_ID
+          value: {{ .id }}
+        - name: MQTT_BROKER_HOST
+          value: "mosquitto"
+        - name: MQTT_BROKER_PORT
+          value: "1883"
+        - name: VIBRATION_FREQ
+          value: "{{ .freq }}"
+        - name: VIBRATION_AMPLITUDE
+          value: "{{ .amplitude }}"
+        - name: NOISE_LEVEL
+          value: "{{ .noise }}"
+---
+{{- end }}
